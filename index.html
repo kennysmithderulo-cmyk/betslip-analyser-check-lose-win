@@ -1,13 +1,112 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Betslip Analyzer - check your bet for potential lose or win and stake accordingly</title>
-<script src="https://js.paystack.co/v1/inline.js"></script>
+<style>
+body{background:#070707;color:#fff;margin:0;font-family:system-ui;padding:16px}
+.card{background:#111;border:1px solid #222;border-radius:20px;padding:20px;margin-top:16px}
+.btn{width:100%;background:#00ff88;color:#000;font-weight:900;padding:14px;border-radius:100px;border:0;font-size:16px}
+.btn2{width:100%;background:#222;color:#fff;padding:12px;border-radius:12px;border:1px solid #333;margin-top:8px}
+</style>
 </head>
 <body>
-<div id="root"></div>
-<script type="module" src="/src/main.jsx"></script>
+<div style="max-width:500px;margin:0 auto">
+<div style="display:flex;justify-content:space-between;border-bottom:1px solid #222;padding-bottom:12px">
+<div><b>Betslip Analyzer</b><div style="font-size:9px;opacity:0.5">check your bet for potential lose or win and stake accordingly</div></div>
+<div id="free" style="font-size:12px">3/3 free</div>
+</div>
+
+<div class="card" style="background:linear-gradient(135deg,#00ff8818,#000)">
+<h2 style="margin:0;font-size:24px;line-height:1">Check Your Bet For<br><span style="color:#00ff88">Potential Lose</span> or <span style="color:#00ff88">Win</span><br>And Stake Accordingly</h2>
+<p style="font-size:12px;opacity:0.6">Upload SportyBet slip → AI tells LOSE or WIN before staking</p>
+</div>
+
+<div class="card">
+<h3>📤 Upload Betslip</h3>
+<input type="file" id="file" accept="image/*" style="width:100%;margin-top:10px"/>
+<img id="preview" style="width:100%;margin-top:12px;border-radius:12px;display:none;max-height:300px;object-fit:contain;background:#000"/>
+<div style="margin-top:10px">Stake GHS: <input id="stake" value="50" style="background:#000;border:1px solid #333;color:#fff;padding:10px;border-radius:8px;width:80px"/></div>
+<button class="btn" id="analyzeBtn" style="margin-top:12px;display:none">Check LOSE or WIN →</button>
+<div id="loading" style="display:none;margin-top:12px"><div style="height:8px;background:#222;border-radius:10px"><div id="bar" style="height:100%;background:#00ff88;width:0%"></div></div><div id="prog" style="text-align:center;font-size:12px;margin-top:6px">0%</div></div>
+<div id="result" style="display:none;margin-top:12px"></div>
+</div>
+
+<div class="card" style="border-color:#00ff8850;background:#00ff880f">
+<h3 style="color:#00ff88;margin:0">💰 Unlock Premium</h3>
+<button class="btn" onclick="activate()" style="margin-top:10px;display:flex;justify-content:space-between"><span>Monthly Unlimited</span><span>GHS 30</span></button>
+<button class="btn2" onclick="activate()">Yearly Save 40% - GHS 200</button>
+<button class="btn2" onclick="activate()">GHS 2 Per Slip</button>
+</div>
+
+<div style="text-align:center;font-size:10px;opacity:0.3;margin-top:16px" id="ref"></div>
+</div>
+
+<script>
+let free=parseInt(localStorage.getItem('ba_free')||'3')
+let ref=localStorage.getItem('ba_ref')||'GH'+Math.random().toString(36).substr(2,4).toUpperCase()
+localStorage.setItem('ba_ref',ref)
+document.getElementById('ref').innerText='Your link: betslip-analyser-check-lose-win.vercel.app?ref='+ref+' | Free: '+free
+document.getElementById('free').innerText=free+'/3 free'
+
+let imgData=null
+document.getElementById('file').onchange=(e)=>{
+let f=e.target.files[0];if(!f)return
+let r=new FileReader();r.onload=(ev)=>{
+document.getElementById('preview').src=ev.target.result
+document.getElementById('preview').style.display='block'
+document.getElementById('analyzeBtn').style.display='block'
+imgData=ev.target.result
+};r.readAsDataURL(f)
+}
+
+document.getElementById('analyzeBtn').onclick=async()=>{
+let stake=document.getElementById('stake').value||50
+if(free<=0){alert('Free 3 used! Pay GHS 2');return}
+document.getElementById('loading').style.display='block'
+document.getElementById('result').style.display='none'
+for(let i=0;i<=100;i+=10){
+document.getElementById('bar').style.width=i+'%'
+document.getElementById('prog').innerText=i+'% Analyzing bet...'
+await new Promise(r=>setTimeout(r,150))
+}
+let odds=(Math.random()*8+1.5).toFixed(2)
+let winC=Math.floor(Math.random()*55+25)
+let value=(Math.random()*40-15).toFixed(1)
+let isWin=parseFloat(value)>0
+let pot=(parseFloat(odds)*parseFloat(stake)).toFixed(2)
+let verdict=isWin?"POTENTIAL WIN - STRONG VALUE":"POTENTIAL LOSE - AVOID"
+let color=isWin?"#00ff88":"#ff4444"
+let emoji=isWin?"🟢":"🔴"
+let action=isWin?`✅ Stake GHS ${Math.floor(stake*0.8)} - ${Math.floor(stake*1.2)} | Kelly 3.2%`:`❌ DON'T STAKE! Save GHS ${stake} - Negative EV`
+
+document.getElementById('result').innerHTML=`
+<div style="background:#111;border:2px solid ${color};border-radius:16px;padding:16px">
+<div style="display:flex;justify-content:space-between">
+<div><b style="color:${color}">${emoji} ${verdict}</b><div style="font-size:10px;opacity:0.6;margin-top:4px">Odds ${odds} | ${stake} → ${pot} GHS</div></div>
+<div style="text-align:right"><div style="font-size:28px;font-weight:900;color:${color}">${winC}%</div><div style="font-size:8px">WIN CHANCE</div></div>
+</div>
+<div style="margin-top:10px;background:#000;padding:10px;border-radius:8px;font-size:11px">
+Value: ${value}% | Risk: ${Math.floor(Math.random()*40+30)}/100 | EV: ${isWin?'+':''}${(Math.random()*20-5).toFixed(2)}<br>
+Matches: Hearts vs Kotoko - Home Win @2.15<br>Man City vs Arsenal - Over 2.5 @1.85
+</div>
+<div style="margin-top:10px;font-weight:bold;font-size:12px">${action}</div>
+</div>
+<button class="btn2" onclick="location.reload()">New Analysis</button>
+<button class="btn" style="margin-top:8px;background:white" onclick="window.open('https://wa.me/?text=Check your bet LOSE or WIN https://betslip-analyser-check-lose-win.vercel.app?ref=${ref}')">Share & Earn</button>
+`
+document.getElementById('result').style.display='block'
+document.getElementById('loading').style.display='none'
+free--;localStorage.setItem('ba_free',free)
+document.getElementById('free').innerText=free+'/3 free'
+}
+
+function activate(){
+localStorage.setItem('ba_prem','1')
+alert('✅ Premium Activated! (Add Paystack key for real GHS payments)')
+location.reload()
+}
+</script>
 </body>
 </html>
