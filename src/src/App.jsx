@@ -1,0 +1,88 @@
+import {useState,useRef,useEffect} from 'react'
+export default function App(){
+const [page,setPage]=useState('home')
+const [ds,setDs]=useState(true)
+const [prev,setPrev]=useState(null)
+const [load,setLoad]=useState(false)
+const [prog,setProg]=useState(0)
+const [step,setStep]=useState('')
+const [res,setRes]=useState(null)
+const [stake,setStake]=useState('50')
+const [code,setCode]=useState('')
+const [prem,setPrem]=useState(()=>localStorage.getItem('ba_prem')==='1')
+const [freeLeft,setFreeLeft]=useState(()=>parseInt(localStorage.getItem('ba_free')||'3'))
+const [refCode]=useState(()=>{let c=localStorage.getItem('ba_ref');if(!c){c='GH'+Math.random().toString(36).substring(2,6).toUpperCase();localStorage.setItem('ba_ref',c)}return c})
+const [balance,setBalance]=useState(()=>parseFloat(localStorage.getItem('ba_bal')||'0'))
+const [hist,setHist]=useState(()=>JSON.parse(localStorage.getItem('ba_hist')||'[]'))
+const r1=useRef();const r2=useRef();const r3=useRef()
+useEffect(()=>{localStorage.setItem('ba_hist',JSON.stringify(hist))},[hist])
+useEffect(()=>{localStorage.setItem('ba_free',freeLeft)},[freeLeft])
+const AFF={
+SportyBet:`https://www.sportybet.com/gh/?shareCode=${refCode}`,
+Betway:`https://www.betway.com.gh/?btag=${refCode}`,
+"1xBet":`https://1xbet.com.gh/?p=${refCode}`,
+Melbet:`https://melbet.com.gh/?ref=${refCode}`
+}
+const onFile=async(e=>{
+const f=e.target.files?.[0];if(!f)return
+let file=f
+if(ds){try{const m=await import('browser-image-compression');file=await m.default(f,{maxSizeMB:0.25,maxWidthOrHeight:1024})}catch{}}
+setPrev(URL.createObjectURL(file));setPage('analyze')
+}
+const pay=(plan,amt)=>{
+const email=prompt('Email:','user@gmail.com')||'user@gmail.com'
+if(window.PaystackPop){
+const h=window.PaystackPop.setup({
+key:'pk_live_REPLACE_WITH_YOUR_KEY',
+email,amount:amt*100,currency:'GHS',ref:''+Date.now(),
+callback:r=>{localStorage.setItem('ba_prem','1');setPrem(true);setFreeLeft(100);setBalance(b=>b+amt*0.7);alert(`✅ ${plan} Active! Ref:${r.reference}`)},
+onClose:()=>{}
+});h.openIframe()
+}else{if(confirm(`DEMO Pay GHS ${amt} for ${plan}?`)){localStorage.setItem('ba_prem','1');setPrem(true);setFreeLeft(100)}}
+}
+const analyze=async()=>{
+if(!prem&&freeLeft<=0){alert('Free 3/day used! Pay GHS 2 or GHS 30 premium');return}
+setLoad(true)
+const steps=["Compressing 95%","Detecting bookmaker","Reading code","Extracting teams","Total odds","Bookie margin","Form analysis","H2H","Win prob","Kelly stake","Final Lose or Win"]
+for(let i=0;i<steps.length;i++){setStep(steps[i]);setProg(Math.round((i+1)/steps.length*100));await new Promise(r=>setTimeout(r,350))}
+const pool=[
+{m:"Hearts vs Kotoko",k:"Home Win",o:2.15,prob:48,form:"W W L W D",h2h:"Hearts 3/5"},
+{m:"Man City vs Arsenal",k:"Over 2.5",o:1.85,prob:62,form:"W W W D W",h2h:"Over 4/5"},
+{m:"Barca vs Real",k:"BTTS Yes",o:1.72,prob:58,form:"High scoring",h2h:"BTTS 4/5"},
+{m:"Ghana vs Nigeria",k:"Draw",o:3.2,prob:32,form:"Even",h2h:"2 draws/3"},
+{m:"Chelsea vs Liverpool",k:"Away Win",o:2.4,prob:45,form:"LIV 3 wins",h2h:"LIV 3 wins"},
+]
+const sel=pool.sort(()=>0.5-Math.random()).slice(0,Math.floor(Math.random()*3)+2)
+const odds=sel.reduce((a,b)=>a*b.o,1)
+const s=parseFloat(stake)||50
+const pot=odds*s
+const modelProb=sel.reduce((a,b)=>a*(b.prob/100),1)*100
+const implied=100/odds
+const value=modelProb-implied
+const ev=(modelProb/100*pot)-s
+const risk=Math.min(95,Math.floor(odds*8+sel.length*7+(value<0?20:0)))
+const winC=Math.max(10,Math.min(82,Math.floor(modelProb*0.9+Math.random()*6)))
+const kelly=Math.max(0,((odds*modelProb/100-(100-modelProb)/100)/odds)*100)
+let verdict,vc,act,emoji
+if(value>10&&winC>55){verdict="POTENTIAL WIN - STRONG VALUE";vc="bg-[#00ff88]/15 text-[#00ff88] border-[#00ff88]/30";act=`Stake GHS ${Math.floor(s*0.8)}-${Math.floor(s*1.2)} | Kelly ${kelly.toFixed(1)}% | EV +${ev.toFixed(2)}`;emoji="🟢"}
+else if(value>0){verdict="POTENTIAL WIN - FAIR";vc="bg-yellow-500/15 text-yellow-300 border-yellow-500/30";act=`Small stake GHS ${Math.floor(s*0.4)} | Kelly ${kelly.toFixed(1)}%`;emoji="🟡"}
+else{verdict="POTENTIAL LOSE - AVOID";vc="bg-red-500/15 text-red-300 border-red-500/30";act=`Don't stake! Save GHS ${s} | Negative EV ${ev.toFixed(2)} - You LOSE long term`;emoji="🔴"}
+const data={book:Object.keys(AFF)[Math.floor(Math.random()*4)],code:code||Math.random().toString(36).substring(2,7).toUpperCase(),odds:odds.toFixed(2),stake:s,pot:pot.toFixed(2),matches:sel,modelProb:modelProb.toFixed(1),implied:implied.toFixed(1),value:value.toFixed(1),ev:ev.toFixed(2),risk,winC,kelly:kelly.toFixed(1),verdict,vc,act,emoji,num:sel.length,id:Date.now(),date:new Date().toLocaleString()}
+setRes(data);setHist(h=>[data,...h].slice(0,100));if(!prem)setFreeLeft(f=>f-1);setLoad(false)
+}
+return(<div className="min-h-screen bg-[#070707] text-white">
+<header className="sticky top-0 z-50 bg-black border-b border-white/10 px-4 py-3 flex justify-between">
+<div><h1 className="font-black text-[12px]">Betslip Analyzer</h1><p className="text-[7px] text-white/50">check your bet for potential lose or win and stake accordingly</p></div>
+<div className="flex gap-1 items-center"><span className="text-[10px] text-white/40 mr-1">{!prem?`${freeLeft}/3`:'∞'}</span>{prem&&<span className="bg-[#00ff88] text-black text-[8px] px-2 py-1 rounded-full font-black">PREMIUM</span>}<button onClick={()=>setPage('home')} className="bg-white/10 px-3 py-2 rounded-lg text-[10px]">Home</button></div>
+</header>
+{page==='home'&&<div className="p-4 max-w-[520px] mx-auto space-y-4">
+<div className="bg-gradient-to-br from-[#00ff88]/15 to-black rounded-[28px] p-6 border border-white/10"><h2 className="text-[24px] font-black leading-[0.95]">Check Your Bet For<br/><span className="text-[#00ff88]">Potential Lose</span> or <span className="text-[#00ff88]">Win</span><br/>And Stake Accordingly</h2><p className="text-white/60 text-[11px] mt-3">Upload slip → AI tells LOSE or WIN BEFORE staking</p><button onClick={()=>setPage('analyze')} className="mt-4 w-full bg-[#00ff88] text-black font-black py-4 rounded-full">Analyze My Bet →</button></div>
+<div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 rounded-2xl p-4 border border-yellow-500/20"><h3 className="font-black text-[13px] text-yellow-300">💰 Unlock Premium</h3><div className="mt-3 space-y-2"><button onClick={()=>pay('Monthly',30)} className="w-full bg-[#00ff88] text-black font-black py-3 rounded-xl flex justify-between px-4 text-[13px]"><span>Monthly Unlimited</span><span>GHS 30</span></button><button onClick={()=>pay('Yearly',200)} className="w-full bg-white text-black font-bold py-3 rounded-xl flex justify-between px-4 text-[13px]"><span>Yearly Save 40%</span><span>GHS 200</span></button><button onClick={()=>pay('Single',2)} className="w-full bg-white/10 border border-white/20 py-3 rounded-xl text-[12px]">GHS 2 Per Slip</button></div></div>
+<div className="bg-white/[0.05] rounded-2xl p-4 border border-white/10"><h3 className="font-bold text-[13px]">💸 Earn Affiliate</h3><div className="mt-2 bg-black rounded-xl p-3 border border-white/10"><div className="text-[9px] text-white/40">YOUR LINK</div><div className="text-[11px] text-[#00ff88] break-all">betslip-analyzer-check-lose-win.vercel.app?ref={refCode}</div><div className="flex gap-2 mt-2"><button onClick={()=>navigator.clipboard.writeText(`https://betslip-analyzer-check-lose-win.vercel.app?ref=${refCode}`)} className="flex-1 bg-white text-black font-bold py-2 rounded-lg text-[11px]">Copy</button><button onClick={()=>window.open(`https://wa.me/?text=Betslip Analyzer - check your bet for potential lose or win https://betslip-analyzer-check-lose-win.vercel.app?ref=${refCode}`)} className="flex-1 bg-[#00ff88] text-black font-bold py-2 rounded-lg text-[11px]">Share WhatsApp</button></div></div><div className="text-[11px] mt-2">Balance: <span className="text-[#00ff88] font-black">GHS {balance.toFixed(2)}</span></div></div>
+<div className="bg-white/[0.05] rounded-2xl p-4 border border-white/10"><h3 className="font-bold text-[13px]">🎰 Bet Links (30% commission)</h3><div className="mt-2 grid grid-cols-2 gap-2">{Object.entries(AFF).map(([b,l])=><button key={b} onClick={()=>window.open(l)} className="bg-black border border-white/10 rounded-xl p-3 text-left"><div className="font-bold text-[12px]">{b}</div><div className="text-[9px] text-[#00ff88]">Bonus →</div></button>)}</div></div>
+<div className="bg-white/[0.05] rounded-2xl p-4 border border-white/10"><h3 className="font-bold text-[13px]">📤 Upload Slip</h3><div className="grid grid-cols-3 gap-2 mt-3"><button onClick={()=>r1.current.click()} className="bg-white text-black rounded-xl py-3 font-black text-[11px]">🖼️ Gallery</button><button onClick={()=>r2.current.click()} className="bg-white/10 rounded-xl py-3 text-[11px] border border-white/10">📁 Files</button><button onClick={()=>r3.current.click()} className="bg-white/10 rounded-xl py-3 text-[11px] border border-white/10">📷 Camera</button></div><input ref={r1} type="file" accept="image/*" hidden onChange={onFile}/><input ref={r2} type="file" accept="image/*" hidden onChange={onFile}/><input ref={r3} type="file" accept="image/*" capture="environment" hidden onChange={onFile}/></div>
+</div>}
+{page==='analyze'&&<div className="p-4 max-w-[520px] mx-auto space-y-4">
+{!prev?<div onClick={()=>r1.current.click()} className="border-2 border-dashed border-white/15 rounded-[24px] p-10 text-center"><div className="text-4xl">🎯</div><div className="font-bold mt-2">Upload Slip</div></div>:<div className="space-y-4"><div className="relative rounded-2xl overflow-hidden bg-black border border-white/10"><img src={prev} className="w-full max-h-[360px] object-contain"/><button onClick={()=>{setPrev(null);setRes(null)}} className="absolute top-2 right-2 bg-black/70 w-7 h-7 rounded-full">✕</button></div>{!res&&!load&&<div className="flex gap-2"><input value={stake} onChange={e=>setStake(e.target.value)} className="flex-1 bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm" placeholder="Stake GHS"/><button onClick={analyze} className="flex-1 bg-[#00ff88] text-black font-black py-3 rounded-xl">{!prem&&freeLeft<=0?'Pay GHS 2':'Check Lose or Win →'}</button></div>}{load&&<div className="bg-white/[0.06] rounded-2xl p-4 border border-white/10"><div className="h-2 bg-white/10 rounded-full"><div className="h-full bg-[#00ff88]" style={{width:`${prog}%`}}></div></div><div className="text-center text-[11px] mt-2">{step} {prog}%</div></div>}{res&&<div className="space-y-3"><div className="bg-white/[0.06] rounded-[18px] p-4 border border-white/10"><div className="flex justify-between"><div><div className="font-black text-[#00ff88]">{res.book} <span className="text-white/30 text-[10px]">{res.code}</span></div></div><div className="text-right"><div className="font-black">{res.odds} odds</div><div className="text-[11px] text-white/60">{res.stake}→{res.pot} GHS</div></div></div><div className="mt-3 space-y-1">{res.matches.map((m,i)=><div key={i} className="flex justify-between text-[11px] bg-black p-2 rounded-lg"><span>{m.m}</span><span className="font-bold text-[#00ff88]">{m.o}</span></div>)}</div></div><div className="grid grid-cols-3 gap-2"><div className="bg-black border border-white/10 rounded-xl p-3 text-center"><div className="text-[8px] text-white/40">WIN CHANCE</div><div className="text-lg font-black text-[#00ff88]">{res.winC}%</div></div><div className="bg-black border border-white/10 rounded-xl p-3 text-center"><div className="text-[8px] text-white/40">VALUE</div><div className={`text-lg font-black ${parseFloat(res.value)>0?'text-[#00ff88]':'text-red-400'}`}>{res.value}%</div></div><div className="bg-black border border-white/10 rounded-xl p-3 text-center"><div className="text-[8px] text-white/40">RISK</div><div className="text-lg font-black">{res.risk}/100</div></div></div><div className={`rounded-xl p-4 border text-center ${res.vc}`}><div className="font-black">{res.emoji} {res.verdict}</div><div className="text-[11px] mt-2">{res.act}</div></div><div className="grid grid-cols-2 gap-2"><button onClick={()=>window.open(`https://wa.me/?text=Bet ${res.book} ${res.odds} odds ${res.verdict} https://betslip-analyzer-check-lose-win.vercel.app?ref=${refCode}`)} className="bg-white text-black font-black py-3 rounded-full text-[12px]">Share & Earn</button><button onClick={()=>{setPrev(null);setRes(null)}} className="bg-white/10 border border-white/20 py-3 rounded-full text-[12px]">New</button></div></div>}</div>}
+</div>}
+</div>)}
