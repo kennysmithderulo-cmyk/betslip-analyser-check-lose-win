@@ -25,7 +25,6 @@ header{position:sticky;top:0;z-index:10;background:#000000ee;backdrop-filter:blu
 </header>
 
 <div class="wrap">
-<!-- HOME PAGE -->
 <div id="homePage">
 <div class="card" style="background:radial-gradient(120% 120% at 0% 0%, #00ff8820, transparent 60%), linear-gradient(180deg,#141414,#0a0a0a);border-color:#00ff8818">
 <h2 style="margin:0;font-size:26px;line-height:0.95;letter-spacing:-0.8px;font-weight:900">Check Your Bet For<br><span style="color:#00ff88">Potential Lose</span> or <span style="color:#00ff88">Win</span><br>And Stake Accordingly</h2>
@@ -42,7 +41,7 @@ header{position:sticky;top:0;z-index:10;background:#000000ee;backdrop-filter:blu
 <button class="btn" style="background:#fff" onclick="pay(200,'Yearly')"><div style="display:flex;justify-content:space-between"><span>Yearly - Save 40%</span><span>GHS 200</span></div></button>
 <button class="btn2" onclick="pay(2,'Single')">GHS 2 Per Single Slip - Instant</button>
 </div>
-<div style="font-size:10px;opacity:0.4;margin-top:8px;text-align:center">Paystack secured • Mobile Money • Card</div>
+<div style="font-size:10px;opacity:0.4;margin-top:8px;text-align:center">Paystack secured • Mobile Money • Card - LIVE</div>
 </div>
 
 <div class="card">
@@ -87,7 +86,6 @@ header{position:sticky;top:0;z-index:10;background:#000000ee;backdrop-filter:blu
 </div>
 </div>
 
-<!-- ANALYZE PAGE -->
 <div id="analyzePage" style="display:none">
 <div id="uploadBox" class="card" style="border:2px dashed #ffffff20;text-align:center;padding:30px">
 <div style="font-size:40px">🎯</div><div style="font-weight:900;margin-top:8px">Upload Betslip to Check Lose or Win</div><div style="font-size:11px;opacity:0.5;margin-top:4px">SportyBet, Betway, 1xBet all supported</div>
@@ -97,7 +95,7 @@ header{position:sticky;top:0;z-index:10;background:#000000ee;backdrop-filter:blu
 <div id="previewBox" style="display:none">
 <div class="card" style="padding:0;overflow:hidden;position:relative;background:#000">
 <img id="preview" style="width:100%;max-height:380px;object-fit:contain"/>
-<button onclick="reset()" style="position:absolute;top:10px;right:10px;background:#000000aa;border:0;color:#fff;width:30px;height:30px;border-radius:100px">✕</button>
+<button onclick="resetSlip()" style="position:absolute;top:10px;right:10px;background:#000000aa;border:0;color:#fff;width:30px;height:30px;border-radius:100px">✕</button>
 </div>
 <div class="card">
 <div style="display:flex;gap:8px"><input id="stake" class="input" value="50"/><input id="code" class="input" placeholder="Booking code"/></div>
@@ -140,7 +138,7 @@ window.scrollTo(0,0)
 function copyLink(){navigator.clipboard.writeText('https://betslip-analyser-check-lose-win.vercel.app?ref='+refCode);alert('Link copied!')}
 function shareWA(){window.open('https://wa.me/?text=Stop losing! Check your bet LOSE or WIN before staking https://betslip-analyser-check-lose-win.vercel.app?ref='+refCode)}
 function openAff(b){window.open(affLinks[b])}
-function reset(){document.getElementById('previewBox').style.display='none';document.getElementById('uploadBox').style.display='block';document.getElementById('result').style.display='none';document.getElementById('loading').style.display='none'}
+function resetSlip(){document.getElementById('previewBox').style.display='none';document.getElementById('uploadBox').style.display='block';document.getElementById('result').style.display='none';document.getElementById('loading').style.display='none'}
 
 function handleFile(f){
 if(!f)return
@@ -176,7 +174,7 @@ let html=`
 <div class="pill" style="text-align:center"><div style="font-size:8px;opacity:0.5">RISK</div><div style="font-size:18px;font-weight:900">${Math.floor(Math.random()*30+45)}/100</div></div>
 </div>
 <div style="margin-top:10px;background:${color}15;border:1px solid ${color}30;border-radius:14px;padding:14px;text-align:center"><div style="font-weight:900;color:${color}">${verdict}</div><div style="font-size:11px;margin-top:6px">${action}</div><div style="font-size:10px;opacity:0.6;margin-top:6px">Model prob ${ (winC*0.9).toFixed(1)}% vs Implied ${(100/parseFloat(odds)).toFixed(1)}% • EV calculated on 11 factors</div></div>
-<div class="grid2" style="margin-top:10px"><button class="btn" style="background:#fff" onclick="shareWA()">Share & Earn GHS 5</button><button class="btn2" style="margin:0" onclick="reset()">New Slip</button></div>
+<div class="grid2" style="margin-top:10px"><button class="btn" style="background:#fff" onclick="shareWA()">Share & Earn GHS 5</button><button class="btn2" style="margin:0" onclick="resetSlip()">New Slip</button></div>
 `
 let resDiv=document.getElementById('result');resDiv.innerHTML=html;resDiv.style.display='block';load.style.display='none'
 if(!prem){free--;localStorage.setItem('ba_free',free)}
@@ -185,11 +183,24 @@ let entry={odds,date:new Date().toLocaleDateString(),verdict,color};hist=[entry,
 
 function pay(amount,plan){
 let email=prompt('Enter email for Paystack receipt','')||'user@gmail.com'
-if(window.PaystackPop){
-let handler=PaystackPop.setup({key:'pk_live_f0406495db009afc29da2ed5e7275df52b15c37c',',email:email,amount:amount*100,currency:'GHS',ref:''+Date.now(),callback:function(r){localStorage.setItem('ba_prem','1');prem=true;bal+=amount*0.7;localStorage.setItem('ba_bal',bal);localStorage.setItem('ba_free','100');alert('✅ '+plan+' Activated! Ref '+r.reference);updateUI()},onClose:function(){alert('Payment closed')}});handler.openIframe()
-}else{
-if(confirm('DEMO: Pay GHS '+amount+' for '+plan+'? (key:'pk_live_f0406495db009afc29da2ed5e7275df52b15c37c',)')){localStorage.setItem('ba_prem','1');prem=true;free=100;localStorage.setItem('ba_free','100');updateUI();alert('Premium Demo Activated!')}
-}
+let handler=PaystackPop.setup({
+key:'pk_live_f0406495db009afc29da2ed5e7275df52b15c37c',
+email:email,
+amount:amount*100,
+currency:'GHS',
+ref:''+Date.now(),
+callback:function(r){
+localStorage.setItem('ba_prem','1');
+prem=true;
+bal+=amount*0.7;
+localStorage.setItem('ba_bal',bal);
+localStorage.setItem('ba_free','100');
+alert('✅ '+plan+' Activated! Ref '+r.reference);
+updateUI()
+},
+onClose:function(){alert('Payment closed')}
+});
+handler.openIframe()
 }
 </script>
 </body>
