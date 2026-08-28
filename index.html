@@ -186,7 +186,7 @@ let entry={odds,date:new Date().toLocaleDateString(),verdict,color};hist=[entry,
 function pay(amount,plan){
 let email=prompt('Enter email for Paystack receipt','')||'user@gmail.com'
 if(window.PaystackPop){
-let handler=PaystackPop.setup({key:'pk_live_REPLACE_WITH_YOUR_KEY',email:email,amount:amount*100,currency:'GHS',ref:''+Date.now(),callback:function(r){localStorage.setItem('ba_prem','1');prem=true;bal+=amount*0.7;localStorage.setItem('ba_bal',bal);localStorage.setItem('ba_free','100');alert('✅ '+plan+' Activated! Ref '+r.reference);updateUI()},onClose:function(){alert('Payment closed')}});handler.openIframe()
+let handler=PaystackPop.setup({key:'pk_live_f0406495db009afc29da2ed5e7275df52b15c37c',',email:email,amount:amount*100,currency:'GHS',ref:''+Date.now(),callback:function(r){localStorage.setItem('ba_prem','1');prem=true;bal+=amount*0.7;localStorage.setItem('ba_bal',bal);localStorage.setItem('ba_free','100');alert('✅ '+plan+' Activated! Ref '+r.reference);updateUI()},onClose:function(){alert('Payment closed')}});handler.openIframe()
 }else{
 if(confirm('DEMO: Pay GHS '+amount+' for '+plan+'? (Add real Paystack key in code)')){localStorage.setItem('ba_prem','1');prem=true;free=100;localStorage.setItem('ba_free','100');updateUI();alert('Premium Demo Activated!')}
 }
