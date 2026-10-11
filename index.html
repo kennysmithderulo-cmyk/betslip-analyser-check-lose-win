@@ -77,4 +77,4 @@ if(!prem){free--;localStorage.setItem('ba_free',free)}let entry={odds:oddsV,date
 }
 function pay(a,p){let em=prompt('Email for receipt','')||'user@gmail.com';let h=PaystackPop.setup({key:'pk_live_f0406495db009afc29da2ed5e7275df52b15c37c',email:em,amount:a*100,currency:'GHS',ref:''+Date.now(),callback:function(r){localStorage.setItem('ba_prem','1');prem=true;bal+=a*0.7;localStorage.setItem('ba_bal',bal);localStorage.setItem('ba_free','100');alert('✅ '+p+' Active! '+r.reference);upd()},onClose:function(){}});h.openIframe()}
 </script></body></html>
-}
+
